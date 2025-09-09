@@ -65,7 +65,37 @@ module.exports.run = async function({ api, event, args, Users, Threads }) {
             targetUserName = event.mentions[mentionedUser];
             targetThreadID = event.threadID;
         }
-        // Case 3: User ID provided
+        // Case 3: ThreadID+UID format (e.g., threadID+userID)
+        else if (args[0] && args[0].includes('+')) {
+            const parts = args[0].split('+');
+            if (parts.length === 2) {
+                const threadPart = parts[0].trim();
+                const userPart = parts[1].trim();
+                
+                if (!isNaN(threadPart) && !isNaN(userPart)) {
+                    targetThreadID = threadPart;
+                    targetUserID = userPart;
+                    
+                    try {
+                        // Try to get user info
+                        try {
+                            const userInfo = await Users.getInfo(targetUserID);
+                            targetUserName = userInfo.name || "User";
+                        } catch (userError) {
+                            // If user info fails, try to get from username cache
+                            targetUserName = await Users.getNameUser(targetUserID) || "User";
+                        }
+                    } catch (error) {
+                        return api.sendMessage("❌ Invalid user ID in threadID+userID format!", event.threadID, event.messageID);
+                    }
+                } else {
+                    return api.sendMessage("❌ Invalid format! Use: threadID+userID (both should be numbers)", event.threadID, event.messageID);
+                }
+            } else {
+                return api.sendMessage("❌ Invalid format! Use: threadID+userID", event.threadID, event.messageID);
+            }
+        }
+        // Case 4: User ID provided (single UID for current thread)
         else if (args[0] && !isNaN(args[0]) && args[0].length > 10) {
             try {
                 targetUserID = args[0];
