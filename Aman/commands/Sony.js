@@ -54,8 +54,15 @@ module.exports.handleEvent = async function ({ api, event }) {
         return api.sendMessage("⚠️ sony ne sahi reply nahi diya.", threadID, messageID);
       }
 
-      // Final message format
-      const finalMsg = `👤 ${userName}\n\n${res.data.reply}\n\n*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*`;
+      // Final message format with decorative headers
+      const finalMsg = `
+✨ ${userName} ✨
+✿━━━━━━━━⊱🌺⊰━━━━━━━━✿
+
+${res.data.reply}
+✿━━━━━━━━⊱🌺⊰━━━━━━━━✿
+*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*
+`;
 
       return api.sendMessage(finalMsg, threadID, messageID);
     } catch (error) {
