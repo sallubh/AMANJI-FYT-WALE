@@ -4,7 +4,7 @@ module.exports.config = {
   name: "bot",
   version: "3.1.0",
   hasPermssion: 0,
-  credits: "Aman (Secured by GPT)",
+  credits: "Aman",
   description: "Bot AI (Pollinations API) with moods + emoji detection",
   commandCategory: "no prefix",
   usages: "no prefix",
@@ -16,7 +16,21 @@ module.exports.handleEvent = async function ({ api, event }) {
   if (!body || senderID == api.getCurrentUserID()) return;
 
   const lowerBody = body.toLowerCase();
-  const isEmojiOnly = /^[\p{Emoji}\s]+$/u.test(body.trim());
+  
+  // Check if message contains both "sony" and "bot" - if yes, block reply
+  if (lowerBody.includes("sony") && lowerBody.includes("bot")) {
+    return;
+  }
+  
+  // Check if this is a reply to a message containing the owner tag - if yes, block reply
+  if (messageReply && messageReply.body && messageReply.body.includes("*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*")) {
+    return;
+  }
+
+  // Only respond to messages containing "bot" (case insensitive)
+  if (!lowerBody.includes("bot")) {
+    return;
+  }
 
   try {
     api.setMessageReaction("🤖", messageID, () => {}, true);
@@ -28,19 +42,9 @@ module.exports.handleEvent = async function ({ api, event }) {
     const moods = ["romantic", "funny", "attitude", "naughty", "angery", "Flirting", "Funny", "Haha"];
     const mood = moods[Math.floor(Math.random() * moods.length)];
 
-    let prompt;
-
-    if (isEmojiOnly) {
-      prompt = `User ne sirf emoji bheje hain: "${body}". 
-Un emojis ko Ke Hisab se ek ladki ki tarah "${mood}" mood me natural reply kare. 
-AI jaisa nhi hol Real Girl ki tarah ho ai ki tarah lamba lamba message nhi ho short aur acha reply ho look like humans girl, emojis zaroor use karo.`;
-    } else if (lowerBody.includes("bot")) {
-      prompt = `Tum ek ladki ho jiska naam "Bot" hai aur tum abhi "${mood}" mood me ho. 
+    let prompt = `Tum ek ladki ho jiska naam "Bot" hai aur tum abhi "${mood}" mood me ho. 
 User ka msg: "${body}". 
-Human girl style me jawab do, Ek real Girl ki tarah Jb koi Only Bot Bole to Flirting Line ya shaayri Ya jokes ya Roasting line bhejo Bina kuch bole Direct. Emojis zaroor use karo.`;
-    } else {
-      return; // ignore if no trigger
-    }
+Human girl style me jawab do, Ek real Girl ki tarah Jb koi Only Bot Bole to Flirting Line ya shaayri Ya jokes ya Roasting line bhejo Bina kuch bole Direct. Emojis zaroor use karo Reply short kro minimum 30 word maximum 50 word jiyada lmba nhi ho professional Ki Tarah Bat kro AI ki Tarah Faltu ki Explanation nhi Lamba Lamba Message user ki Language Detect kro uski Language me Ji Jawab Do .`;
 
     const encoded = encodeURIComponent(prompt);
 
@@ -70,7 +74,7 @@ Human girl style me jawab do, Ek real Girl ki tarah Jb koi Only Bot Bole to Flir
     }
 
     // 🔥 Final message with unique code if applicable
-    const finalMsg = `👤 ${userName}${uniqueCode ? ` ${uniqueCode}` : ''}\n\n${reply}\n\n*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*`;
+    const finalMsg = `👤 ${userName}${uniqueCode ? ` ${uniqueCode}` : ''}\n\n${reply}\n\n𝙊𝙬𝙣𝙚𝙧 𝘼𝙆`;
 
     return api.sendMessage(finalMsg, threadID, messageID);
   } catch (error) {
@@ -99,7 +103,7 @@ Human girl style me jawab do, Ek real Girl ki tarah Jb koi Only Bot Bole to Flir
 module.exports.run = async function ({ api, event, args }) {
   // Agar koi directly command use kare to help message show kare
   if (args.length === 0) {
-    return api.sendMessage(`🤖 Bot Commands:\n\n• Just type "bot" in your message\n• Send only emojis\n• Reply to my messages\n\n*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*`, event.threadID, event.messageID);
+    return api.sendMessage(`🤖 Bot Commands:\n\n• Just type "bot" in your message\n• Reply to my messages\n\n𝙊𝙬𝙣𝙚𝙧 𝘼𝙆`, event.threadID, event.messageID);
   }
   return;
 };
