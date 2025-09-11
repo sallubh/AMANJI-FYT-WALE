@@ -12,8 +12,8 @@
   "EMAIL": "",
   "PASSWORD": "",
   "OTPKEY": "",
-  "BOTNAME": "Testing",
-  "PREFIX": ".",
+  "BOTNAME": "Sony",
+  "PREFIX": "/",
   "ADMINBOT": ["100088677459075"],
   "NDH": ["100088677459075"],
   "DATABASE": {
