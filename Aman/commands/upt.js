@@ -2,7 +2,7 @@ module.exports.config = {
 	name: "upt",
 	version: "1.0.2",
 	hasPermssion: 0,
-	credits: "Mirai Team",
+	credits: "Aman Khan",
 	description: "Kiểm tra thời gian bot đã online",
 	commandCategory: "system",
 	cooldowns: 5,
@@ -28,13 +28,30 @@ module.exports.languages = {
 }
 
 module.exports.run = async ({ api, event, getText }) => {
-	const time = process.uptime(),
-		hours = Math.floor(time / (60 * 60)),
-		minutes = Math.floor((time % (60 * 60)) / 60),
-		seconds = Math.floor(time % 60);
+	try {
+		const time = process.uptime(),
+			hours = Math.floor(time / (60 * 60)),
+			minutes = Math.floor((time % (60 * 60)) / 60),
+			seconds = Math.floor(time % 60);
 
-	const pidusage = await global.nodemodule["pidusage"](process.pid);
+		let pidusage;
+		try {
+			pidusage = await global.nodemodule["pidusage"](process.pid);
+		} catch (error) {
+			console.error("Pidusage error:", error);
+			pidusage = {
+				cpu: 0,
+				memory: process.memoryUsage().rss
+			};
+		}
 
-	const timeStart = Date.now();
-	return api.sendMessage("", event.threadID, () => api.sendMessage(getText("returnResult", hours, minutes, seconds, global.data.allUserID.length, global.data.allThreadID.length, pidusage.cpu.toFixed(1), byte2mb(pidusage.memory), Date.now() - timeStart), event.threadID, event.messageID));
-} 
+		const timeStart = Date.now();
+		const userCount = global.data.allUserID ? global.data.allUserID.length : 0;
+		const threadCount = global.data.allThreadID ? global.data.allThreadID.length : 0;
+		
+		return api.sendMessage("", event.threadID, () => api.sendMessage(getText("returnResult", hours, minutes, seconds, userCount, threadCount, pidusage.cpu.toFixed(1), byte2mb(pidusage.memory), Date.now() - timeStart), event.threadID, event.messageID));
+	} catch (error) {
+		console.error("Uptime command error:", error);
+		return api.sendMessage("Error getting bot statistics. Please try again.", event.threadID, event.messageID);
+	}
+}
