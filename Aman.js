@@ -19,7 +19,8 @@ global.client = new Object({
     handleReply: new Array(),
     mainPath: process.cwd(),
     configPath: new String(),
-  getTime: function (option) {
+    timeStart: null, // Initialize timeStart properly
+    getTime: function (option) {
         switch (option) {
             case "seconds":
                 return `${moment.tz("Asia/Kolkata").format("ss")}`;
@@ -40,7 +41,7 @@ global.client = new Object({
             case "fullTime":
                 return `${moment.tz("Asia/Kolkata").format("HH:mm:ss DD/MM/YYYY")}`;
         }
-  }
+    }
 });
 
 global.data = new Object({
@@ -196,7 +197,10 @@ function onBot({ models: botModel }) {
         console.log("[SYSTEM] ✅ Global API access enabled for commands");
         
         global.config.version = '1.2.14';
-        global.client.timeStart = new Date().getTime();
+        
+        // FIXED: Set timeStart here for accurate uptime tracking
+        global.client.timeStart = Date.now();
+        console.log(`[SYSTEM] ✅ Bot start time set: ${new Date(global.client.timeStart).toISOString()}`);
         
         // Load Commands
         try {
@@ -346,7 +350,7 @@ function onBot({ models: botModel }) {
                             }
                         }
                         
-                        // FIXED: Register handleEvent for NoPrefix events (missing in old code)
+                        // FIXED: Register handleEvent for NoPrefix events
                         if (event.handleEvent) global.client.eventRegistered.push(event.config.name);
                         global.client.events.set(event.config.name, event);
                         logger.loader(`✅ Loaded event: ${event.config.name}`);
