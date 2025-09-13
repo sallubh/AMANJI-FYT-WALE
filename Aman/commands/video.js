@@ -113,7 +113,7 @@ module.exports = {
         await api.unsendMessage(processingMsg.messageID);
 
         await api.sendMessage({
-          body: `✅ Downloaded Successfully!\n\n• Title: ${title}\n• Quality: ${quality}\n• Format: ${format.toUpperCase()}\n• Credits: Aman Khan`,
+          body: `✅ Downloaded Successfully!\n\n• Title: ${title}\n• Quality: ${quality}\n• Format: ${format.toUpperCase()}\n• 𝙊𝙬𝙣𝙚𝙧 𝘼𝙆`,
           attachment: attachment
         }, threadID, () => {
           try {
@@ -171,7 +171,7 @@ module.exports = {
       await api.unsendMessage(processingMsg.messageID);
 
       api.sendMessage({
-        body: msg + "👉 Reply with a number (1-6) to select a video.\n💡 *★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*",
+        body: msg + "👉 Reply with a number (1-6) to select a video.\n💡 𝙊𝙬𝙣𝙚𝙧 𝘼𝙆",
         attachment: await Promise.all(thumbnails)
       }, threadID, (err, info) => {
         if (err) {
