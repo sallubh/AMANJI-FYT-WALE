@@ -253,7 +253,7 @@ module.exports = {
         await api.unsendMessage(processingMsg.messageID);
 
         await api.sendMessage({
-          body: `✅ Downloaded Successfully!\n\n• Title: ${title}\n• Quality: ${quality}\n• Format: ${format.toUpperCase()}\n• Credits: Aman Khan`,
+          body: `✅ Downloaded Successfully!\n\n• Title: ${title}\n• Quality: ${quality}\n• Format: ${format.toUpperCase()}\n• 𝙊𝙬𝙣𝙚𝙧 𝘼𝙆`,
           attachment: attachment
         }, threadID, () => {
           try {
@@ -279,7 +279,7 @@ module.exports = {
         await api.unsendMessage(processingMsg.messageID);
         
         await api.sendMessage({
-          body: `✨ Video Information\n\n🎬 Title: ${data.title}\n⏳ Duration: ${(data.duration / 60).toFixed(2)} mins\n📺 Resolution: ${data.resolution}\n👀 Views: ${data.view_count.toLocaleString()}\n👍 Likes: ${data.like_count.toLocaleString()}\n💬 Comments: ${data.comment_count.toLocaleString()}\n📂 Category: ${data.categories[0]}\n📢 Channel: ${data.channel}\n👥 Subscribers: ${data.channel_follower_count.toLocaleString()}\n🔗 Channel URL: ${data.channel_url}\n🔗 Video URL: ${data.webpage_url}\n\n💡 Credits: Aman Khan`,
+          body: `✨ Video Information\n\n🎬 Title: ${data.title}\n⏳ Duration: ${(data.duration / 60).toFixed(2)} mins\n📺 Resolution: ${data.resolution}\n👀 Views: ${data.view_count.toLocaleString()}\n👍 Likes: ${data.like_count.toLocaleString()}\n💬 Comments: ${data.comment_count.toLocaleString()}\n📂 Category: ${data.categories[0]}\n📢 Channel: ${data.channel}\n👥 Subscribers: ${data.channel_follower_count.toLocaleString()}\n🔗 Channel URL: ${data.channel_url}\n🔗 Video URL: ${data.webpage_url}\n\n💡 𝙊𝙬𝙣𝙚𝙧 𝘼𝙆`,
           attachment: await streamImage(data.thumbnail, `info_thumb_${Date.now()}.jpg`)
         }, threadID, messageID);
         
