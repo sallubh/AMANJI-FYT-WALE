@@ -3,10 +3,10 @@ const fs = require("fs-extra");
 
 module.exports.config = {
   name: "pinterest",
-  version: "1.0.2",
+  version: "1.0.1",
   hasPermssion: 0,
   credits: "Aman Khan",
-  description: "Get HQ images from Pinterest (Render API)",
+  description: "Get images from Pinterest (Render API)",
   commandCategory: "images",
   usages: "/pinterest <search query> <count>",
   cooldowns: 5,
@@ -17,8 +17,8 @@ module.exports.run = async function ({ api, event, args }) {
     return api.sendMessage("❌ Usage: /pinterest <search> <count>", event.threadID, event.messageID);
   }
 
-  let search = args.slice(0, -1).join(" "); // query
-  let count = parseInt(args[args.length - 1]); // last arg
+  let search = args.slice(0, -1).join(" "); // query words
+  let count = parseInt(args[args.length - 1]); // last arg as count
   if (isNaN(count)) {
     search = args.join(" ");
     count = 5; // default
@@ -27,20 +27,12 @@ module.exports.run = async function ({ api, event, args }) {
   try {
     // ✅ Your Render API
     const res = await axios.get(`https://pinterest-api-dfxf.onrender.com/pinterest?q=${encodeURIComponent(search)}&count=${count}`);
-
-    if (!res.data || !res.data.result) {
+    
+    if (!res.data || !res.data.result || res.data.result.length === 0) {
       return api.sendMessage("❌ Koi result nahi mila!", event.threadID, event.messageID);
     }
 
-    // 🔥 Filter only high-quality (236x) images
-    let images = res.data.result.filter(url => url.includes("236x"));
-
-    // Strictly take only requested count
-    images = images.slice(0, count);
-
-    if (images.length === 0) {
-      return api.sendMessage("❌ High-quality image nahi mili!", event.threadID, event.messageID);
-    }
+    let images = res.data.result;
 
     const imgData = [];
     for (let i = 0; i < images.length; i++) {
@@ -56,7 +48,7 @@ module.exports.run = async function ({ api, event, args }) {
       event.messageID
     );
 
-    // clear cache
+    // clear cache after 60s
     setTimeout(() => {
       for (let i = 0; i < images.length; i++) {
         fs.unlinkSync(__dirname + `/cache/pin_${i}.jpg`);
