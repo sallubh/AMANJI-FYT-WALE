@@ -1,28 +1,32 @@
+// autoseen.js
 module.exports.config = {
   name: "autoseen",
-  version: "2.0.0",
+  version: "1.0.1",
   hasPermssion: 0,
   credits: "Aman",
-  description: "Automatically marks all messages as seen",
+  description: "Automatically marks incoming messages as seen",
   commandCategory: "system",
-  cooldowns: 0
+  cooldowns: 0,
 };
 
-module.exports.run = () => {}; // no command, background feature only
-
-// Background listener
 module.exports.handleEvent = async function ({ api, event }) {
   try {
-    // Ignore bot's own messages
-    if (event.senderID == api.getCurrentUserID()) return;
+    if (!event || !event.threadID) return;
 
-    // Mark thread as seen
-    api.markAsSeen(event.threadID, (err) => {
-      if (err) {
-        console.error(`[AutoSeen] Error in thread ${event.threadID}:`, err.message);
-      }
-    });
-  } catch (e) {
-    console.error("[AutoSeen] Unexpected error:", e.message);
+    // Sirf new messages ke liye
+    if (event.type === "message" || event.type === "message_reply") {
+      await api.markAsRead(event.threadID);
+      await api.markAsSeen(event.threadID);
+
+      // Debug ke liye console log
+      console.log(`[AutoSeen] Marked seen in thread: ${event.threadID}`);
+    }
+  } catch (err) {
+    console.error("[AutoSeen Error]", err.message);
   }
+};
+
+module.exports.run = async function () {
+  // ye command run ke liye nahi hai
+  return;
 };
