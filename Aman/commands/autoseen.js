@@ -1,207 +1,157 @@
-const axios = require("axios");
+const fs = require('fs');
+const path = require('path');
+
+// Simple file-based storage for autoseen settings
+const dataFile = path.join(__dirname, 'autoseen_data.json');
+
+// Helper function to read data
+function readData() {
+    try {
+        if (fs.existsSync(dataFile)) {
+            return JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+        }
+        return {};
+    } catch (error) {
+        console.error("AutoSeen: Error reading data file", error);
+        return {};
+    }
+}
+
+// Helper function to write data
+function writeData(data) {
+    try {
+        fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
+        return true;
+    } catch (error) {
+        console.error("AutoSeen: Error writing data file", error);
+        return false;
+    }
+}
 
 module.exports.config = {
-  name: "autoseen",
-  version: "2.0.0",
-  hasPermssion: 0,
-  credits: "Aman - Fixed",
-  description: "Automatically marks messages as seen with rate limiting",
-  commandCategory: "no prefix",
-  usages: "automatic",
-  cooldowns: 0
+    name: "autoseen",
+    version: "2.0.0",
+    hasPermssion: 1, // Admin and higher can use
+    credits: "YourName", 
+    description: "Thread ke liye autoseen on/off karo",
+    commandCategory: "Admin",
+    usages: "[on/off/status]",
+    cooldowns: 3,
+    dependencies: {}
 };
 
-// Global storage for rate limiting
-global.autoSeenData = global.autoSeenData || {
-  lastMarkTime: 0,
-  pendingThreads: new Set(),
-  isProcessing: false,
-  rateLimitDelay: 3000, // 3 seconds between calls
-  batchDelay: 10000,    // 10 seconds for batch processing
-  errorCount: 0,
-  maxErrors: 5
-};
-
-module.exports.handleEvent = async function ({ api, event }) {
-  const { senderID, threadID, type } = event;
-
-  // Only process message events
-  if (!['message', 'message_reply'].includes(type)) return;
-  
-  // Don't mark own messages as seen
-  if (senderID == api.getCurrentUserID()) return;
-
-  const currentTime = Date.now();
-  const seenData = global.autoSeenData;
-
-  // Add thread to pending list
-  seenData.pendingThreads.add(threadID);
-
-  // Rate limiting check
-  if (currentTime - seenData.lastMarkTime < seenData.rateLimitDelay) {
-    return; // Too soon, skip this call
-  }
-
-  // If already processing, wait
-  if (seenData.isProcessing) return;
-
-  // Start processing
-  seenData.isProcessing = true;
-  
-  try {
-    // Method 1: Mark specific thread as read (more efficient)
-    if (seenData.pendingThreads.size === 1) {
-      await api.markAsRead(threadID);
-      console.log(`[AutoSeen] Marked thread ${threadID} as read`);
-    }
-    // Method 2: Batch mark multiple threads
-    else if (seenData.pendingThreads.size > 1) {
-      // Mark all pending threads individually
-      const threadsToMark = Array.from(seenData.pendingThreads);
-      
-      for (let i = 0; i < Math.min(threadsToMark.length, 5); i++) {
-        try {
-          await api.markAsRead(threadsToMark[i]);
-          await new Promise(resolve => setTimeout(resolve, 500)); // Small delay between marks
-        } catch (error) {
-          console.log(`[AutoSeen] Error marking thread ${threadsToMark[i]}:`, error.message);
+module.exports.run = async function({ api, event, args }) {
+    const { threadID, messageID, senderID, isGroup } = event;
+    
+    try {
+        const input = args[0] ? args[0].toLowerCase() : '';
+        
+        // Show usage if no argument provided
+        if (!input) {
+            return api.sendMessage(
+                "🔧 AutoSeen Commands:\n" +
+                "• `/autoseen on` - Turn ON autoseen\n" +
+                "• `/autoseen off` - Turn OFF autoseen\n" +
+                "• `/autoseen status` - Check current status",
+                threadID, messageID
+            );
         }
-      }
-      
-      console.log(`[AutoSeen] Batch marked ${Math.min(threadsToMark.length, 5)} threads`);
+        
+        let data = readData();
+        
+        switch (input) {
+            case 'on':
+                data[threadID] = true;
+                if (writeData(data)) {
+                    api.sendMessage(
+                        `✅ AutoSeen turned ON!\n${isGroup ? '👥 Group' : '👤 Chat'}: ${threadID}`,
+                        threadID, messageID
+                    );
+                } else {
+                    api.sendMessage("❌ Failed to save settings!", threadID, messageID);
+                }
+                break;
+                
+            case 'off':
+                data[threadID] = false;
+                if (writeData(data)) {
+                    api.sendMessage(
+                        `❌ AutoSeen turned OFF!\n${isGroup ? '👥 Group' : '👤 Chat'}: ${threadID}`,
+                        threadID, messageID
+                    );
+                } else {
+                    api.sendMessage("❌ Failed to save settings!", threadID, messageID);
+                }
+                break;
+                
+            case 'status':
+                const isEnabled = data[threadID] === true;
+                api.sendMessage(
+                    `📊 AutoSeen Status:\n` +
+                    `${isGroup ? '👥 Group' : '👤 Chat'}: ${threadID}\n` +
+                    `Status: ${isEnabled ? '✅ ON' : '❌ OFF'}`,
+                    threadID, messageID
+                );
+                break;
+                
+            default:
+                api.sendMessage(
+                    "❌ Invalid option!\nUse: on, off, or status",
+                    threadID, messageID
+                );
+        }
+        
+    } catch (error) {
+        console.error("AutoSeen Command Error:", error);
+        api.sendMessage(
+            "❌ Command failed! Please try again later.",
+            threadID, messageID
+        );
     }
-
-    // Update timing
-    seenData.lastMarkTime = currentTime;
-    seenData.pendingThreads.clear();
-    seenData.errorCount = 0; // Reset error count on success
-
-  } catch (error) {
-    seenData.errorCount++;
-    console.log(`[AutoSeen] Error (${seenData.errorCount}/${seenData.maxErrors}):`, error.message);
-    
-    // If too many errors, increase delay
-    if (seenData.errorCount >= seenData.maxErrors) {
-      seenData.rateLimitDelay = Math.min(seenData.rateLimitDelay * 2, 30000); // Max 30 seconds
-      console.log(`[AutoSeen] Increased delay to ${seenData.rateLimitDelay}ms due to errors`);
-      seenData.errorCount = 0;
-    }
-    
-    // Handle specific errors
-    if (error.message?.includes('rate limit') || error.message?.includes('429')) {
-      seenData.rateLimitDelay = 15000; // 15 seconds on rate limit
-      console.log("[AutoSeen] Rate limited - increasing delay");
-    }
-  } finally {
-    seenData.isProcessing = false;
-  }
 };
 
-// Alternative method using markAsDelivered (lighter on API)
-module.exports.handleEventAlt = async function ({ api, event }) {
-  const { senderID, threadID, messageID, type } = event;
-
-  // Only process message events
-  if (!['message', 'message_reply'].includes(type)) return;
-  
-  // Don't mark own messages
-  if (senderID == api.getCurrentUserID()) return;
-
-  const currentTime = Date.now();
-  const seenData = global.autoSeenData;
-
-  // Rate limiting
-  if (currentTime - seenData.lastMarkTime < seenData.rateLimitDelay) return;
-  if (seenData.isProcessing) return;
-
-  seenData.isProcessing = true;
-
-  try {
-    // Use markAsDelivered instead (lighter API call)
-    await api.markAsDelivered(threadID, messageID);
-    console.log(`[AutoSeen] Message delivered in thread ${threadID}`);
+// Auto seen functionality
+module.exports.handleEvent = async function({ api, event }) {
+    const { threadID, senderID, body, type } = event;
     
-    seenData.lastMarkTime = currentTime;
-    seenData.errorCount = 0;
-
-  } catch (error) {
-    seenData.errorCount++;
-    console.log(`[AutoSeen] Delivery mark error:`, error.message);
+    // Only process message events
+    if (type !== "message" && type !== "message_reply") {
+        return;
+    }
     
-    if (seenData.errorCount >= 3) {
-      seenData.rateLimitDelay = Math.min(seenData.rateLimitDelay * 1.5, 20000);
-      seenData.errorCount = 0;
+    // Skip bot's own messages
+    if (senderID === api.getCurrentUserID()) {
+        return;
     }
-  } finally {
-    seenData.isProcessing = false;
-  }
-};
-
-module.exports.run = async function ({ api, event, args }) {
-  const { threadID, messageID } = event;
-  
-  if (!args[0]) {
-    const seenData = global.autoSeenData;
-    return api.sendMessage(
-      `🔍 **AutoSeen Status**\n\n` +
-      `⚡ Rate Limit Delay: ${seenData.rateLimitDelay}ms\n` +
-      `📊 Error Count: ${seenData.errorCount}\n` +
-      `🔄 Is Processing: ${seenData.isProcessing}\n` +
-      `📝 Pending Threads: ${seenData.pendingThreads.size}\n\n` +
-      `**Commands:**\n` +
-      `/autoseen status - Show this info\n` +
-      `/autoseen reset - Reset error counters\n` +
-      `/autoseen delay [ms] - Set custom delay`,
-      threadID, messageID
-    );
-  }
-
-  const command = args[0].toLowerCase();
-
-  switch (command) {
-    case 'status':
-      // Already handled above
-      break;
-      
-    case 'reset':
-      global.autoSeenData = {
-        lastMarkTime: 0,
-        pendingThreads: new Set(),
-        isProcessing: false,
-        rateLimitDelay: 3000,
-        batchDelay: 10000,
-        errorCount: 0,
-        maxErrors: 5
-      };
-      return api.sendMessage("✅ AutoSeen data reset successfully!", threadID, messageID);
-      
-    case 'delay':
-      if (!args[1] || isNaN(args[1])) {
-        return api.sendMessage("⚠️ Please provide delay in milliseconds\nExample: /autoseen delay 5000", threadID, messageID);
-      }
-      
-      const newDelay = parseInt(args[1]);
-      if (newDelay < 1000 || newDelay > 60000) {
-        return api.sendMessage("⚠️ Delay should be between 1000ms (1s) and 60000ms (60s)", threadID, messageID);
-      }
-      
-      global.autoSeenData.rateLimitDelay = newDelay;
-      return api.sendMessage(`✅ Rate limit delay set to ${newDelay}ms`, threadID, messageID);
-      
-    default:
-      return api.sendMessage("❌ Invalid command! Use: status, reset, or delay", threadID, messageID);
-  }
-};
-
-// Initialize on load
-module.exports.onLoad = function() {
-  console.log("[AutoSeen] Enhanced AutoSeen v2.0 loaded with rate limiting!");
-  
-  // Clean up pending threads every minute
-  setInterval(() => {
-    if (global.autoSeenData && global.autoSeenData.pendingThreads.size > 100) {
-      global.autoSeenData.pendingThreads.clear();
-      console.log("[AutoSeen] Cleared pending threads cache");
+    
+    // Skip commands (messages starting with /)
+    if (body && (body.startsWith("/") || body.startsWith("!"))) {
+        return;
     }
-  }, 60000);
+    
+    try {
+        const data = readData();
+        
+        // Check if autoseen is enabled for this thread
+        if (data[threadID] === true) {
+            // Add small delay to make it more natural
+            setTimeout(() => {
+                api.markAsRead(threadID, (err) => {
+                    if (err) {
+                        // Only log significant errors, ignore rate limits
+                        if (!err.toString().includes("rate limit")) {
+                            console.error(`AutoSeen: Failed to mark as read in ${threadID}`);
+                        }
+                    }
+                });
+            }, 1000 + Math.random() * 2000); // Random delay 1-3 seconds
+        }
+        
+    } catch (error) {
+        // Silently handle to prevent console spam
+        if (error.toString().includes("ENOENT") || error.toString().includes("rate limit")) {
+            return; // Ignore file not found and rate limit errors
+        }
+        console.error("AutoSeen Event Error:", error.message);
+    }
 };
