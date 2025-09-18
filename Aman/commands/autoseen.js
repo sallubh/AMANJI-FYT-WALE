@@ -1,3 +1,4 @@
+const axios = require("axios");
 const fs = require('fs');
 const path = require('path');
 
@@ -32,7 +33,7 @@ module.exports.config = {
     name: "autoseen",
     version: "2.0.0",
     hasPermssion: 1, // Admin and higher can use
-    credits: "YourName", 
+    credits: "Aman Khan", 
     description: "Thread ke liye autoseen on/off karo",
     commandCategory: "Admin",
     usages: "[on/off/status]",
@@ -44,15 +45,16 @@ module.exports.run = async function({ api, event, args }) {
     const { threadID, messageID, senderID, isGroup } = event;
     
     try {
-        const input = args[0] ? args[0].toLowerCase() : '';
+        // FIXED: Pehle check karte hain args exist karta hai ya nahi
+        const input = (args && args[0]) ? args[0].toLowerCase() : '';
         
         // Show usage if no argument provided
         if (!input) {
             return api.sendMessage(
                 "🔧 AutoSeen Commands:\n" +
-                "• `/autoseen on` - Turn ON autoseen\n" +
-                "• `/autoseen off` - Turn OFF autoseen\n" +
-                "• `/autoseen status` - Check current status",
+                "• /autoseen on - Turn ON autoseen\n" +
+                "• /autoseen off - Turn OFF autoseen\n" +
+                "• /autoseen status - Check current status",
                 threadID, messageID
             );
         }
@@ -104,7 +106,7 @@ module.exports.run = async function({ api, event, args }) {
     } catch (error) {
         console.error("AutoSeen Command Error:", error);
         api.sendMessage(
-            "❌ Command failed! Please try again later.",
+            "❌ Command failed! Check console for details.",
             threadID, messageID
         );
     }
@@ -124,8 +126,8 @@ module.exports.handleEvent = async function({ api, event }) {
         return;
     }
     
-    // Skip commands (messages starting with /)
-    if (body && (body.startsWith("/") || body.startsWith("!"))) {
+    // Skip commands - FIXED: Type check added
+    if (body && typeof body === 'string' && (body.startsWith("/") || body.startsWith("!"))) {
         return;
     }
     
@@ -138,20 +140,13 @@ module.exports.handleEvent = async function({ api, event }) {
             setTimeout(() => {
                 api.markAsRead(threadID, (err) => {
                     if (err) {
-                        // Only log significant errors, ignore rate limits
-                        if (!err.toString().includes("rate limit")) {
-                            console.error(`AutoSeen: Failed to mark as read in ${threadID}`);
-                        }
+                        console.error(`AutoSeen: Failed to mark as read in ${threadID}:`, err.message);
                     }
                 });
             }, 1000 + Math.random() * 2000); // Random delay 1-3 seconds
         }
         
     } catch (error) {
-        // Silently handle to prevent console spam
-        if (error.toString().includes("ENOENT") || error.toString().includes("rate limit")) {
-            return; // Ignore file not found and rate limit errors
-        }
         console.error("AutoSeen Event Error:", error.message);
     }
 };
