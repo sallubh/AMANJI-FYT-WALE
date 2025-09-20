@@ -393,7 +393,7 @@ try {
 catch { 
     console.log("AppState file not found, but continuing...");
     var appState = [];
-                                }
+}
 //========= Enhanced Bot Function with Database Safety =========//
 
 function onBot({ models: botModel }) {
