@@ -7,15 +7,6 @@ const logger = require("./utils/log.js");
 const login = require("fca-priyansh"); 
 const axios = require("axios");
 
-require("dotenv").config();
-const moment = require("moment-timezone");
-const { readdirSync, readFileSync, writeFileSync, existsSync, unlinkSync, rm } = require("fs-extra");
-const { join, resolve } = require("path");
-const { execSync } = require('child_process');
-const logger = require("./utils/log.js");
-const login = require("fca-priyansh"); 
-const axios = require("axios");
-
 // ========= HTTP SERVER FOR RENDER KEEP-ALIVE =========
 const express = require('express');
 const app = express();
