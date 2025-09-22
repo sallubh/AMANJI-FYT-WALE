@@ -1,7 +1,6 @@
-// warning.js
 module.exports.config = {
     name: "warning",
-    version: "1.0.1",
+    version: "1.0.2",
     hasPermssion: 0,
     credits: "Aman Khan",
     description: "Auto warning system for bad words against bot",
@@ -13,156 +12,80 @@ module.exports.config = {
 module.exports.handleEvent = async function({ api, event, Users }) {
     try {
         const { threadID, messageID, senderID, body } = event;
-
-        // safety checks
         if (!body) return;
-        const selfID = api.getCurrentUserID && api.getCurrentUserID();
-        if (!senderID || senderID == selfID) return; // ignore bot's own messages
 
-        // Trigger words array (lowercase)
+        const selfID = api.getCurrentUserID && api.getCurrentUserID();
+        if (senderID == selfID) return;
+
         const triggerWords = [
-            "bot chutiya",
-            "bot chutiya hai",
-            "bot baklol",
-            "bot baklol hai",
-            "bot pagal",
-            "bot pagal hai",
-            "bot bewakoof",
-            "bot bewakoof hai",
-            "chutiya bot",
-            "baklol bot",
-            "pagal bot",
-            "bewakoof bot",
-            "bot stupid",
-            "stupid bot",
-            "bot faltu",
-            "faltu bot",
-            "bot faltu hai"
+            "bot chutiya hai", "bot gandu", "bot jhantu", 
+            "lund bot", "bot bc", "bot mc", "bot madarchod",
+            "bot chutiye", "bot randi", "bot chinar", 
+            "bot lol",
         ];
 
         const messageText = body.toLowerCase().trim();
+        const hasTrigger = triggerWords.some(w => messageText.includes(w));
+        if (!hasTrigger) return;
 
-        // check contains any trigger (substring match)
-        const hasTriggerWord = triggerWords.some(w => messageText.includes(w));
-
-        if (!hasTriggerWord) return;
-
-        // Reaction (best-effort)
+        // ❌ Reaction
         try {
-            if (messageID) {
-                // some libs use (emoji, messageID, cb, true)
-                api.setMessageReaction && api.setMessageReaction("❌", messageID, () => {}, true);
-            }
-        } catch (e) {
-            console.log("[warning] reaction error:", e.message || e);
-        }
+            api.setMessageReaction("❌", messageID, () => {}, true);
+        } catch {}
 
-        // Get user's display name (best-effort)
+        // User name
         let userName = "User";
         try {
-            if (Users && typeof Users.getNameUser === "function") {
-                const name = await Users.getNameUser(senderID);
-                if (name) userName = name;
-            }
-        } catch (e) {
-            console.log("[warning] get user name error:", e.message || e);
-        }
+            const n = await Users.getNameUser(senderID);
+            if (n) userName = n;
+        } catch {}
 
-        // Build warning message. Body must contain the exact substring used in mentions.tag.
-        const mentionTag = userName;
-        const warningBody = `${mentionTag} tune gali kaise di? 😡\nTu hota kaun hai? Dafa ho tu yaha se!\n\n⚠️ Bot ko respect karo!`;
+        // Warning messages
+        const warnings = [
+            `${userName} tune gali kaise di? 😡`,
+            "HATT TERRI BEHAN KI CHUT FAD KE KUTTO KHILAO RAND KE",
+            "APNI AMMA SE PUCHH KISSE CHUDI HAI AAJ JHANT KE BAAL",
+            "TERIII BEHANNN KO CHOD KE PAGAL KRDUGA RANDI",
+            "ARE JHANT KE BAAL TU ITNA BADA HO GAYA APNE BAAP KO ABOUSE KREGA"
+            "JAHA SE NIKLA HAI USI ME DAL DUGA JHANTU ",
+            "GAND ME AGR JIYADA KHUJLI HAI TO ID ME AA JANA",
+            "CHAL DFA HO RANDI KE",
+        ];
 
-        // Send first warning with mention (fromIndex = position of tag in body)
-        try {
-            const mentions = [{
-                tag: mentionTag,
-                id: senderID,
-                fromIndex: warningBody.indexOf(mentionTag) // typically 0
-            }];
-
-            await new Promise((resolve) => {
-                api.sendMessage({ body: warningBody, mentions }, threadID, (err) => {
-                    if (err) console.log("[warning] send mention error:", err);
-                    resolve();
-                });
+        // Sab warnings line by line bhejna
+        for (let msg of warnings) {
+            await new Promise(resolve => {
+                api.sendMessage({
+                    body: msg,
+                    mentions: [{ tag: userName, id: senderID, fromIndex: msg.indexOf(userName) }]
+                }, threadID, () => resolve());
             });
-        } catch (e) {
-            console.log("[warning] send mention exception:", e.message || e);
+            await new Promise(r => setTimeout(r, 1200)); // 1.2s delay
         }
 
-        // After 3 seconds send final message then leave the group (best-effort)
+        // Final message
         setTimeout(async () => {
-            try {
-                // Final message
-                const finalMsg = "Apne paas rakho apna group! 🚪👋";
-                await new Promise((resolve) => {
-                    api.sendMessage(finalMsg, threadID, (err) => {
-                        if (err) console.log("[warning] final msg error:", err);
-                        resolve();
-                    });
-                });
+            await new Promise(resolve => {
+                api.sendMessage("LERE LUND KE YE APNA GROUP APNI GAND ME DAL LENA AB BOT EXIT 😎😈", threadID, () => resolve());
+            });
 
-                // Wait a bit then try to remove bot (leave)
-                setTimeout(async () => {
-                    try {
-                        // Try callback-style remove in both common parameter orders
-                        const myId = typeof api.getCurrentUserID === "function" ? api.getCurrentUserID() : null;
-
-                        const tryRemove = () => new Promise((resolve) => {
-                            try {
-                                if (!myId) {
-                                    // try leaveGroup if available
-                                    if (typeof api.leaveGroup === "function") {
-                                        api.leaveGroup(threadID, (err) => {
-                                            if (err) console.log("[warning] leaveGroup err:", err);
-                                            resolve();
-                                        });
-                                    } else resolve();
-                                    return;
-                                }
-
-                                // attempt common signature: removeUserFromGroup(userID, threadID, cb)
-                                api.removeUserFromGroup && api.removeUserFromGroup(myId, threadID, (err) => {
-                                    if (!err) return resolve();
-                                    // try reversed order: removeUserFromGroup(threadID, userID, cb)
-                                    api.removeUserFromGroup(myId, threadID, (err2) => {
-                                        // note: some libs insist the same order; we already tried. fallback to leaveGroup
-                                        if (!err2) return resolve();
-                                        if (typeof api.leaveGroup === "function") {
-                                            api.leaveGroup(threadID, (err3) => { if (err3) console.log("[warning] leaveGroup err2:", err3); resolve(); });
-                                        } else resolve();
-                                    });
-                                });
-                            } catch (e) {
-                                // fallback to leaveGroup
-                                try {
-                                    if (typeof api.leaveGroup === "function") {
-                                        api.leaveGroup(threadID, (err) => { if (err) console.log("[warning] leaveGroup err3:", err); resolve(); });
-                                    } else resolve();
-                                } catch (ee) {
-                                    console.log("[warning] remove error fallback:", ee.message || ee);
-                                    resolve();
-                                }
-                            }
-                        });
-
-                        await tryRemove();
-                    } catch (leaveErr) {
-                        console.log("[warning] leaving error:", leaveErr.message || leaveErr);
-                    }
-                }, 1000);
-
-            } catch (finalErr) {
-                console.log("[warning] final step error:", finalErr.message || finalErr);
-            }
-        }, 3000);
+            // Bot leave group
+            setTimeout(() => {
+                try {
+                    const myId = api.getCurrentUserID();
+                    api.removeUserFromGroup(myId, threadID, () => {});
+                } catch (e) {
+                    console.log("[warning] leave error:", e.message);
+                }
+            }, 1000);
+        }, 1500);
 
     } catch (err) {
-        console.log("[warning] handleEvent error:", err.message || err);
+        console.log("[warning] handleEvent error:", err.message);
     }
 };
 
 module.exports.run = async function({ api, event }) {
-    const helpMessage = `⚠️ WARNING SYSTEM ACTIVE! 🤖\n\n✅ Bot protection enabled\n🚫 Gali galoch not allowed\n❌ Auto reaction on bad words\n👋 Bot will leave if abused\n\n💡 Bot ko respect karo!`;
+    const helpMessage = `⚠️ WARNING SYSTEM ACTIVE! 🤖\n\n✅ Bot protection enabled\n🚫 Gali galoch not allowed\n❌ Auto multiple warnings\n👋 Bot will leave if abused\n\n💡 Bot ko respect karo!`;
     return api.sendMessage(helpMessage, event.threadID, event.messageID);
 };
