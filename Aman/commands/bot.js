@@ -38,8 +38,8 @@ const characters = {
     emoji: "👑"
   },
   savage: {
-    name: "Savage",
-    personality: "bold, fearless, straightforward, badass",
+    name: "Zui",
+    personality: "bold, fearless, Romantic, straightforward, badass",
     style: "roasting and confident",
     emoji: "🔥"
   },
@@ -116,7 +116,7 @@ module.exports.handleEvent = async function ({ api, event }) {
 
   try {
     // Set reaction
-    api.setMessageReaction("⋆.°🦋༘⋆", messageID, () => {}, true);
+    api.setMessageReaction("🌿", messageID, () => {}, true);
 
     const userInfo = await api.getUserInfo(senderID);
     const userName = userInfo[senderID]?.name || "User";
@@ -132,8 +132,8 @@ Rules:
 - Keep response 20-35 words maximum
 - Use ${selectedCharacter.style} tone
 - No AI explanations or formal talk
-- Direct, smart, and engaging reply
-- Always reply in English alphabet (Roman/Hinglish) - NO Devanagari script
+- Direct, smart, and Funny line send and engaging reply
+- Always reply in Hindi type in English alphabet (Roman/Hinglish) - NO Devanagari script
 - If thinking in Hindi, write it as: "Tum bahut cute ho" not "तुम बहुत क्यूट हो"
 - Be authentic to ${selectedCharacter.name}'s personality
 - No long explanations, just pure character response`;
@@ -161,16 +161,16 @@ Rules:
     if (!reply || reply.length < 10) {
       // Character-specific fallback replies
       const fallbacks = {
-        devil: ["Darkness speaks through me 🔥", "Your soul calls to the shadows ⋆.°🦋༘⋆"],
-        pikachu: ["Pika pika! Energy overload ⚡", "Thunder and cuteness combined 🤍"],
-        angel: ["Heaven's blessing upon you 🪽", "Divine light surrounds us 🤍"],
-        princess: ["Royal grace in every word 👑", "Elegance is my language 💭"],
-        savage: ["Ready to roast or toast? 🔥", "Savage mode: activated ⋆.°🦋༘⋆"],
-        cutie: ["Aww, you're so sweet 🐻‍❄️", "Cuteness overload incoming 🫧"],
-        queen: ["Bow down to the queen 👑", "Royalty runs in my code 🔥"],
-        flirt: ["Someone's being naughty 💭", "Flirty vibes activated ⋆.°🦋༘⋆"],
-        bro: ["Bro code activated 🫧", "Chill vibes only 🤍"],
-        genius: ["Intelligence level: maximum 🦋", "Smart reply processing 💭"]
+        Devil: ["Darkness speaks through me 🔥", "Your soul calls to the shadows ⋆.°🦋༘⋆"],
+        Pikachu: ["Pika pika! Energy overload ⚡", "Thunder and cuteness combined 🤍"],
+        Angel: ["Heaven's blessing upon you 🪽", "Divine light surrounds us 🤍"],
+        Arincess: ["Royal grace in every word 👑", "Elegance is my language 💭"],
+        Zui: ["Ready to roast or toast? 🔥", "Zui mode: activated ⋆.°🦋༘⋆"],
+        Cutie: ["Aww, you're so sweet 🐻‍❄️", "Cuteness overload incoming 🫧"],
+        Queen: ["Bow down to the queen 👑", "Royalty runs in my code 🔥"],
+        Flirt: ["Someone's being naughty 💭", "Flirty vibes activated ⋆.°🦋༘⋆"],
+        Bro: ["Bro code activated 🫧", "Chill vibes only 🤍"],
+        Genius: ["Intelligence level: maximum 🦋", "Smart reply processing 💭"]
       };
       
       const charKey = Object.keys(characters).find(key => characters[key] === selectedCharacter);
@@ -182,7 +182,7 @@ Rules:
     const decorativeEmojis = ["⋆.°🦋༘⋆", "❀˖°", "🤍🪽", "☁︎", "🐻‍❄️", "🫧", "💭"];
     const randomEmoji = decorativeEmojis[Math.floor(Math.random() * decorativeEmojis.length)];
 
-    const finalMsg = `💕⃝🕊️ @${userName} 💕⃝🕊️
+    const finalMsg = `💕⃝🕊️ ${userName} 💕⃝🕊️
 •••••••••••••••••••••••••••••••••
 ${reply}
 ───⋆⋅☆⋅⋆────⋆⋅☆⋅⋆──
