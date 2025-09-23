@@ -2,13 +2,77 @@ const axios = require("axios");
 
 module.exports.config = {
   name: "bot",
-  version: "3.1.0",
+  version: "5.0.0",
   hasPermssion: 0,
-  credits: "Aman",
-  description: "Bot AI (Pollinations API) with moods + emoji detection",
+  credits: "Aman Khan",
+  description: "Multiple Character Bot AI System",
   commandCategory: "no prefix",
   usages: "no prefix",
   cooldowns: 2,
+};
+
+// Character Database
+const characters = {
+  devil: {
+    name: "Devil",
+    personality: "dark, mysterious, powerful, commanding",
+    style: "attitude with dark humor",
+    emoji: "🔥"
+  },
+  pikachu: {
+    name: "Pikachu",
+    personality: "cute, energetic, playful, electric",
+    style: "kawaii and bubbly",
+    emoji: "⚡"
+  },
+  angel: {
+    name: "Angel",
+    personality: "pure, caring, divine, peaceful",
+    style: "sweet and heavenly",
+    emoji: "🤍"
+  },
+  princess: {
+    name: "Princess",
+    personality: "elegant, royal, graceful, sophisticated",
+    style: "classy and refined",
+    emoji: "👑"
+  },
+  savage: {
+    name: "Savage",
+    personality: "bold, fearless, straightforward, badass",
+    style: "roasting and confident",
+    emoji: "🔥"
+  },
+  cutie: {
+    name: "Cutie",
+    personality: "adorable, innocent, sweet, loving",
+    style: "childlike and pure",
+    emoji: "🐻‍❄️"
+  },
+  queen: {
+    name: "Queen",
+    personality: "dominant, confident, powerful, majestic",
+    style: "boss lady energy",
+    emoji: "👑"
+  },
+  flirt: {
+    name: "Flirt",
+    personality: "romantic, charming, seductive, playful",
+    style: "flirty and teasing",
+    emoji: "💭"
+  },
+  bro: {
+    name: "Bro",
+    personality: "friendly, casual, supportive, chill",
+    style: "buddy and cool",
+    emoji: "🫧"
+  },
+  genius: {
+    name: "Genius",
+    personality: "intelligent, witty, logical, smart",
+    style: "clever and analytical",
+    emoji: "🦋"
+  }
 };
 
 module.exports.handleEvent = async function ({ api, event }) {
@@ -27,83 +91,136 @@ module.exports.handleEvent = async function ({ api, event }) {
     return;
   }
 
-  // Only respond to messages containing "bot" (case insensitive)
-  if (!lowerBody.includes("bot")) {
+  // Character selection logic
+  let selectedCharacter = null;
+  
+  // Check for specific character names
+  for (const [key, char] of Object.entries(characters)) {
+    if (lowerBody.includes(key)) {
+      selectedCharacter = char;
+      break;
+    }
+  }
+  
+  // If "bot" mentioned but no specific character, select random
+  if (!selectedCharacter && lowerBody.includes("bot")) {
+    const charKeys = Object.keys(characters);
+    const randomKey = charKeys[Math.floor(Math.random() * charKeys.length)];
+    selectedCharacter = characters[randomKey];
+  }
+  
+  // If no character selected, return
+  if (!selectedCharacter) {
     return;
   }
 
   try {
-    api.setMessageReaction("🤖", messageID, () => {}, true);
+    // Set reaction
+    api.setMessageReaction("💝", messageID, () => {}, true);
 
     const userInfo = await api.getUserInfo(senderID);
     const userName = userInfo[senderID]?.name || "User";
 
-    // Random mood select
-    const moods = ["romantic", "funny", "attitude", "naughty", "angery", "Flirting", "Funny", "Haha"];
-    const mood = moods[Math.floor(Math.random() * moods.length)];
+    // Create character-specific prompt
+    let prompt = `You are ${selectedCharacter.name} character with personality: ${selectedCharacter.personality}. 
+Your response style: ${selectedCharacter.style}. 
+User message: "${body}". 
+User name: ${userName}.
 
-    let prompt = `Tum ek ladki ho jiska naam "Bot" hai aur tum abhi "${mood}" mood me ho. 
-User ka msg: "${body}". 
-Human girl style me jawab do, Ek real Girl ki tarah Jb koi Only Bot Bole to Flirting Line ya shaayri Ya jokes ya Roasting line bhejo Bina kuch bole Direct. Emojis zaroor use karo Reply short kro minimum 30 word maximum 50 word jiyada lmba nhi ho professional Ki Tarah Bat kro AI ki Tarah Faltu ki Explanation nhi Lamba Lamba Message user ki Language Detect kro uski Language me Ji Jawab Do .`;
+Rules:
+- Reply as ${selectedCharacter.name} character only
+- Keep response 20-35 words maximum
+- Use ${selectedCharacter.style} tone
+- No AI explanations or formal talk
+- Direct, smart, and engaging reply
+- Match user's language (Hindi/English)
+- Be authentic to ${selectedCharacter.name}'s personality
+- No long explanations, just pure character response`;
 
     const encoded = encodeURIComponent(prompt);
 
-    // ✅ Pollinations API call
+    // Pollinations API call
     const res = await axios.get(`https://text.pollinations.ai/${encoded}`, {
       headers: {
-        "User-Agent": "BotAI/3.1",
+        "User-Agent": "CharacterBot/5.0",
         "Accept": "application/json, text/plain, */*",
       },
       timeout: 10000,
       validateStatus: (status) => status >= 200 && status < 300,
     });
 
-    let reply = typeof res.data === "string" ? res.data.trim() : "Bot ko samajh nahi aaya 😅";
+    let reply = typeof res.data === "string" ? res.data.trim() : `${selectedCharacter.name} mode activated! ⋆.°🦋༘⋆`;
 
-    if (!reply) {
-      reply = "Bot soch rahi hai... tum bahut interesting ho 💖";
+    // Ensure reply is within word limit
+    const words = reply.split(' ');
+    if (words.length > 35) {
+      reply = words.slice(0, 35).join(' ') + '...';
     }
 
-    // 🔥 Unique Code System - Jab koi bot ke message ko reply kare
-    let uniqueCode = "";
-    if (messageReply && messageReply.senderID == api.getCurrentUserID()) {
-      // Generate unique code based on user ID and timestamp
-      const timestamp = Date.now();
-      const codeBase = senderID.toString() + timestamp.toString();
-      uniqueCode = `🆔 #${codeBase.substr(0, 6).toUpperCase()}`;
+    if (!reply || reply.length < 10) {
+      // Character-specific fallback replies
+      const fallbacks = {
+        devil: ["Darkness speaks through me 🔥", "Your soul calls to the shadows ⋆.°🦋༘⋆"],
+        pikachu: ["Pika pika! Energy overload ⚡", "Thunder and cuteness combined 🤍"],
+        angel: ["Heaven's blessing upon you 🪽", "Divine light surrounds us 🤍"],
+        princess: ["Royal grace in every word 👑", "Elegance is my language 💭"],
+        savage: ["Ready to roast or toast? 🔥", "Savage mode: activated ⋆.°🦋༘⋆"],
+        cutie: ["Aww, you're so sweet 🐻‍❄️", "Cuteness overload incoming 🫧"],
+        queen: ["Bow down to the queen 👑", "Royalty runs in my code 🔥"],
+        flirt: ["Someone's being naughty 💭", "Flirty vibes activated ⋆.°🦋༘⋆"],
+        bro: ["Bro code activated 🫧", "Chill vibes only 🤍"],
+        genius: ["Intelligence level: maximum 🦋", "Smart reply processing 💭"]
+      };
+      
+      const charKey = Object.keys(characters).find(key => characters[key] === selectedCharacter);
+      const charFallbacks = fallbacks[charKey] || ["Character mode activated ⋆.°🦋༘⋆"];
+      reply = charFallbacks[Math.floor(Math.random() * charFallbacks.length)];
     }
 
-    // 🔥 Final message with unique code if applicable
-    const finalMsg = `👤 ${userName}${uniqueCode ? ` ${uniqueCode}` : ''}\n\n${reply}\n\n𝙊𝙬𝙣𝙚𝙧 𝘼𝙆`;
+    // Format final message
+    const decorativeEmojis = ["⋆.°🦋༘⋆", "❀˖°", "🤍🪽", "☁︎", "🐻‍❄️", "🫧", "💭"];
+    const randomEmoji = decorativeEmojis[Math.floor(Math.random() * decorativeEmojis.length)];
+
+    const finalMsg = `💕⃝🕊️ @${userName} 💕⃝🕊️
+•••••••••••••••••••••••••••••••••
+${reply}
+───⋆⋅☆⋅⋆────⋆⋅☆⋅⋆──
+${randomEmoji}@${selectedCharacter.name}
+
+✮⃝❤@Aman Khan ᯓ ✈︎`;
 
     return api.sendMessage(finalMsg, threadID, messageID);
+    
   } catch (error) {
-    console.error("Pollinations error:", error);
+    console.error("Character Bot error:", error);
 
-    const backupReplies = [
-      "Server bhi thoda thak gaya, par mai abhi bhi tumse baat karna chahti hu 😘",
-      "Reply nahi aayi, par mera dil tumhe yaad kar raha hai 💕",
-      "Kabhi kabhi silence bhi bada romantic hota hai 😏",
-      "Chalo mai tumhe ek smile bhejti hu 🙂✨",
+    // Character-specific error messages
+    const errorReplies = [
+      "System glitch... but character remains strong ⋆.°🦋༘⋆",
+      "Connection lost but personality intact 🤍",
+      "Error detected... switching to backup mode 🫧",
+      "Technical issue... character mode still active 💭"
     ];
-    const random = backupReplies[Math.floor(Math.random() * backupReplies.length)];
     
-    // Unique code for error messages too if it was a reply to bot
-    let uniqueCode = "";
-    if (event.messageReply && event.messageReply.senderID == api.getCurrentUserID()) {
-      const timestamp = Date.now();
-      const codeBase = senderID.toString() + timestamp.toString();
-      uniqueCode = `🆔 #${codeBase.substr(0, 6).toUpperCase()}`;
-    }
+    const randomError = errorReplies[Math.floor(Math.random() * errorReplies.length)];
     
-    return api.sendMessage(`${random}${uniqueCode ? ` ${uniqueCode}` : ''}\n\n*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*`, threadID, messageID);
+    const errorMsg = `💕⃝🕊️ @${event.senderID} 💕⃝🕊️
+•••••••••••••••••••••••••••••••••
+${randomError}
+───⋆⋅☆⋅⋆────⋆⋅☆⋅⋆──
+🔥@${selectedCharacter ? selectedCharacter.name : 'System'}
+
+*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*`;
+    
+    return api.sendMessage(errorMsg, threadID, messageID);
   }
 };
 
 module.exports.run = async function ({ api, event, args }) {
-  // Agar koi directly command use kare to help message show kare
   if (args.length === 0) {
-    return api.sendMessage(`🤖 Bot Commands:\n\n• Just type "bot" in your message\n• Reply to my messages\n\n𝙊𝙬𝙣𝙚𝙧 𝘼𝙆`, event.threadID, event.messageID);
+    const charList = Object.values(characters).map(char => `${char.emoji} ${char.name}`).join('\n');
+    
+    return api.sendMessage(`🤖 Character Bot System:\n\n📝 Available Characters:\n${charList}\n\n💡 Usage:\n• Type "bot" for random character\n• Type character name for specific one\n• Reply to character messages\n\n✮⃝❤ Aman Khan ᯓ ✈︎`, event.threadID, event.messageID);
   }
   return;
 };
