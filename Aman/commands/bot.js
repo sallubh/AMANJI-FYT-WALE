@@ -37,7 +37,7 @@ const characters = {
     style: "classy and refined",
     emoji: "👑"
   },
-  savage: {
+  zui: {
     name: "Zui",
     personality: "bold, fearless, Romantic, straightforward, badass",
     style: "roasting and confident",
