@@ -34,7 +34,7 @@ module.exports.run = function({ api, event, args }) {
   }
 
   msg += `\n\n*★᭄𝐎𝐰𝐧𝐞𝐫 𝐀 𝐊 ⚔️⏤͟͟͞͞★*`;
-  msg += `\nOwner Id: https://www.facebook.com/AK47xK`;
+  msg += `\nOwner Id: https://www.facebook.com/AK47kx`;
 
   return api.sendMessage(msg, threadID);
 };
