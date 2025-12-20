@@ -12,10 +12,10 @@
   "EMAIL": "",
   "PASSWORD": "",
   "OTPKEY": "",
-  "BOTNAME": "Sony",
-  "PREFIX": "/",
-  "ADMINBOT": ["100000933269135"],
-  "NDH": ["100000933269135"],
+  "BOTNAME": "BOT KING",
+  "PREFIX": ".",
+  "ADMINBOT": ["100001150741675"],
+  "NDH": ["100001150741675"],
   "DATABASE": {
     "sqlite": {
       "storage": "data.sqlite"
