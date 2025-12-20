@@ -12,8 +12,8 @@
   "EMAIL": "",
   "PASSWORD": "",
   "OTPKEY": "",
-  "BOTNAME": "BOT KING",
-  "PREFIX": ".",
+  "BOTNAME": "Bot king",
+  "PREFIX": "/",
   "ADMINBOT": ["100001150741675"],
   "NDH": ["100001150741675"],
   "DATABASE": {
